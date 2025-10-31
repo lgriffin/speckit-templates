@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
+      "WebFetch(domain:virtual-kubelet.io)",
+      "WebFetch(domain:github.com)",
+      "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
+      "Bash(.specify/scripts/bash/setup-plan.sh:*)",
+      "WebFetch(domain:pkg.go.dev)",
+      "WebFetch(domain:flightctl.io)",
+      "Bash(.specify/scripts/bash/update-agent-context.sh:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
