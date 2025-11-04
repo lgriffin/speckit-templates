@@ -1,35 +1,35 @@
 {
   "customInstructions": [
     {
-      "name": "/specify",
+      "name": "/speckit.specify",
       "path": ".claude/commands/specify.md"
     },
     {
-      "name": "/clarify",
+      "name": "/speckit.clarify",
       "path": ".claude/commands/clarify.md"
     },
     {
-      "name": "/plan",
+      "name": "/speckit.plan",
       "path": ".claude/commands/plan.md"
     },
     {
-      "name": "/architecture",
+      "name": "/speckit.architecture",
       "path": ".claude/commands/architecture.md"
     },
     {
-      "name": "/tasks",
+      "name": "/speckit.tasks",
       "path": ".claude/commands/tasks.md"
     },
     {
-      "name": "/analyze",
+      "name": "/speckit.analyze",
       "path": ".claude/commands/analyze.md"
     },
     {
-      "name": "/implement",
+      "name": "/speckit.implement",
       "path": ".claude/commands/implement.md"
     },
     {
-      "name": "/constitution",
+      "name": "/speckit.constitution",
       "path": ".claude/commands/constitution.md"
     }
   ],
