@@ -1,76 +1,67 @@
 ---
-description: Generate or update architecture documentation with Mermaid diagrams from existing specification documents.
+description: Generate or update architecture diagrams and documentation
 ---
 
-The user input to you can be provided directly by the agent or as a command argument - you **MUST** consider it before proceeding with the prompt (if not empty).
+## User Input
 
-User input:
-
+```text
 $ARGUMENTS
+```
 
-Given the optional context provided as an argument, do this:
+You **MUST** consider the user input before proceeding (if not empty).
 
-1. Run `.specify/scripts/bash/setup-plan.sh --json` from the repo root and parse JSON for FEATURE_SPEC, SPECS_DIR, BRANCH. All future file paths must be absolute.
-   - BEFORE proceeding, verify that at least plan.md and spec.md exist in SPECS_DIR. If missing, PAUSE and instruct the user to run `/plan` first, as architecture requires completed design artifacts.
+## Outline
 
-2. Load and analyze available design documents from SPECS_DIR:
-   - **Required**: spec.md (functional requirements, entities, user scenarios)
-   - **Required**: plan.md (technical context, dependencies, project structure)
-   - **Recommended**: data-model.md (entities, relationships, state transitions)
-   - **Recommended**: research.md (technical decisions, integration patterns)
-   - **Recommended**: quickstart.md (key user flows, test scenarios)
-   - If any recommended documents are missing, WARN but continue with limited architecture view
+This command generates comprehensive architecture documentation with Mermaid diagrams based on the current feature's design artifacts.
 
-3. Execute the architecture template:
-   - Load `.specify/templates/architecture-template.md`
-   - Set Input path to SPECS_DIR
-   - Run the Execution Flow (main) function steps 1-11
-   - The template is self-contained and executable
-   - Follow validation and gate checks as specified
+1. **Setup**: Run `.specify/scripts/bash/check-prerequisites.sh --json` (or PowerShell equivalent) to get FEATURE_DIR and available documents.
 
-4. Generate all required Mermaid diagrams:
-   - **System Context**: External actors, system boundary, data flows
-   - **Component Architecture**: Layers, components, dependencies
-   - **Data Model**: Entity relationships, state machines (if data-model.md exists)
-   - **Key Flows**: 3-5 sequence diagrams from user scenarios
-   - **Deployment Architecture**: Infrastructure, RBAC, configuration
-   - **Technology Stack**: Languages, frameworks, dependencies
+2. **Load context**: Read available design documents from FEATURE_DIR:
+   - spec.md (functional requirements, entities, user scenarios)
+   - data-model.md (entities, relationships, state transitions)
+   - research.md (technical decisions, integration patterns)
+   - plan.md (technical context, dependencies, project structure)
+   - quickstart.md (key user flows, test scenarios)
 
-5. Write architecture documentation:
-   - Write architecture.md to SPECS_DIR with all diagrams and sections
-   - Include design principles and trade-offs
-   - Add glossary of domain terms
-   - Link references back to source documents
-   - Update Execution Status tracking
+3. **Generate architecture documentation** with the following sections:
 
-6. Generate HTML companion file (optional but recommended):
-   - Create architecture.html in SPECS_DIR
-   - Embed Mermaid.js from CDN for guaranteed rendering
-   - Apply styling for readability
-   - Open in browser for immediate preview
-   - This ensures diagrams render even without editor extensions
+   ### System Context Diagram
+   - Show the system and its external actors/systems
+   - Use Mermaid C4 diagram or flowchart
 
-7. Validate architecture documentation:
-   - All mandatory sections completed
-   - All Mermaid diagrams render without errors (test syntax)
-   - At least 3 key flows documented
-   - Component names consistent across diagrams
-   - No invented components (all extracted from specs)
-   - Glossary defines domain terms
-   - References link to all source documents
+   ### Component Architecture
+   - Major system components and their relationships
+   - Technology choices from research.md
+   - Use Mermaid component or class diagram
 
-8. Report results:
-   - File paths: architecture.md and architecture.html (if generated)
-   - List of diagrams created
-   - Any warnings about missing source documents
-   - Confirmation that all diagrams validated successfully
+   ### Data Model
+   - Entity Relationship Diagram from data-model.md
+   - State machines for entities with state transitions
+   - Use Mermaid ER diagram and state diagrams
 
-Context for architecture generation: $ARGUMENTS
+   ### Key Flows
+   - 3-5 most important user flows from quickstart.md
+   - Use Mermaid sequence diagrams
 
-**Note**: This command can be run:
-- After `/plan` completes to generate initial architecture
-- Standalone to regenerate architecture after spec updates
-- Multiple times to refine diagrams based on user feedback
+   ### Deployment Architecture
+   - How the system is deployed
+   - Based on technical context from plan.md
+   - Use Mermaid deployment diagram
 
-Use absolute paths with the repository root for all file operations to avoid path issues.
+   ### Technology Stack
+   - Layered view of technologies
+   - From research.md and plan.md
+   - Use Mermaid graph or flowchart
+
+4. **Write architecture.md** to FEATURE_DIR with all generated diagrams and explanations.
+
+5. **Report completion** with path to architecture.md and summary of generated diagrams.
+
+## Key Rules
+
+- Use absolute paths for all file operations
+- Generate valid Mermaid diagram syntax
+- Include textual explanations for each diagram
+- Focus on clarity over complexity
+- Ensure diagrams are technology-specific (unlike spec.md which is technology-agnostic)
 

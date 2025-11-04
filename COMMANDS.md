@@ -1,588 +1,323 @@
-# Spec-Kit Commands HOWTO
+# Spec-Kit Commands - Customization Guide
 
-This document explains how custom commands work in this spec-kit implementation and how they align with the official [spec-kit workflow](https://github.com/github/spec-kit).
-
-## Table of Contents
-
-- [Overview](#overview)
-- [How Command Registration Works](#how-command-registration-works)
-- [Available Commands](#available-commands)
-- [Typical Workflow](#typical-workflow)
-- [Command Details](#command-details)
-- [Permissions Model](#permissions-model)
-- [How This Aligns with Spec-Kit](#how-this-aligns-with-spec-kit)
-- [Extending Commands](#extending-commands)
-
----
+This document explains how to use and customize spec-kit commands with AI coding agents.
 
 ## Overview
 
-This repository uses **Cursor/Claude-specific custom commands** to implement the Spec-Kit workflow. Commands are registered in `.claude/settings.local.json` and executed by the AI agent when you type them in chat.
+This repository demonstrates **spec-kit customization** - how to add local command shortcuts that work alongside the global spec-kit commands.
 
-### Quick Start
+### Two-Layer Command System
+
+**1. Global Commands** (built into spec-kit):
+- `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`, `/speckit.implement`
+- Provided automatically by spec-kit
+- Use default implementations
+- Work across all projects
+
+**2. Local Shortcuts** (this customization):
+- `/specify`, `/plan`, `/tasks`, `/implement`
+- Defined in `.claude/settings.local.json`
+- Use customized implementations in `.claude/commands/*.md`
+- Can be tailored to your workflow
+
+## Available Commands
+
+| Local Shortcut | Global Command | Purpose | Difference |
+|----------------|----------------|---------|------------|
+| `/specify` | `/speckit.specify` | Create feature specification | Same |
+| `/clarify` | `/speckit.clarify` | Ask clarifying questions | Same |
+| `/plan` | `/speckit.plan` | Generate implementation plan | **Custom includes architecture** |
+| `/architecture` | N/A | Generate architecture diagrams | **Custom only** |
+| `/tasks` | `/speckit.tasks` | Break plan into tasks | Same |
+| `/analyze` | `/speckit.analyze` | Analyze existing code/specs | Same |
+| `/implement` | `/speckit.implement` | Execute implementation | Same |
+| `/constitution` | `/speckit.constitution` | Review project constitution | Same |
+
+**Key Differences:**
+- `/plan` (custom) automatically generates `architecture.md` with Mermaid diagrams
+- `/speckit.plan` (global) does NOT generate architecture - you'd need to run a separate command
+- `/architecture` is a custom command added in this template, not part of core spec-kit
+
+## How Customization Works
+
+### Default Spec-Kit Init
+
+When you run `specify init my-project --ai claude`, you get:
 
 ```
-/speckit.specify Create a todo app with user authentication
-/speckit.clarify
-/speckit.plan Use React with TypeScript, Express backend, PostgreSQL
-/speckit.architecture
-/speckit.tasks
-/speckit.implement
+my-project/
+├── .claude/
+│   └── commands/
+│       ├── speckit.specify.md
+│       ├── speckit.plan.md
+│       └── ... (other global commands)
+└── .specify/
+    ├── memory/constitution.md
+    ├── scripts/...
+    └── templates/...
 ```
 
+This gives you the **global `/speckit.*` commands**.
+
+### This Template's Customization
+
+This repository **extends** the default init by adding:
+
+```
+.claude/
+├── settings.local.json          # ← Registers local shortcuts
+└── commands/
+    ├── speckit.*.md            # Global defaults (from init)
+    ├── specify.md              # ← Custom /specify
+    ├── plan.md                 # ← Custom /plan
+    ├── architecture.md          # ← Custom /architecture
+    └── ... (other customs)
+```
+
+Now you have **both** options:
+- Use `/speckit.plan` → runs default spec-kit behavior
+- Use `/plan` → runs your customized version
+
+### Why This Approach?
+
+✅ **Backwards compatible** - Global commands still work  
+✅ **Flexible** - Override only what you want  
+✅ **Shareable** - Commit `.claude/` to share team customizations  
+✅ **Clear intent** - Local shortcuts show you've customized the workflow
+
+## Using This Template
+
+### Option 1: Apply to New Project
+
+```bash
+# Initialize with spec-kit
+specify init my-new-project --ai claude
+
+# Copy customizations from this template
+cp -r speckit-templates/.claude my-new-project/
+cp -r speckit-templates/.specify/* my-new-project/.specify/
+
+# Or, if you want to merge:
+# Review and manually merge .specify/ contents
+```
+
+### Option 2: Apply to Existing Project
+
+```bash
+cd my-existing-project
+
+# Copy custom command shortcuts
+cp -r ../speckit-templates/.claude .
+
+# Selectively merge .specify/ customizations
+# (Review each file to avoid overwriting your constitution, etc.)
+```
+
+### Option 3: Fork This Template
+
+1. Fork/clone this repository
+2. Customize `.claude/commands/*.md` to your workflow
+3. Customize `.specify/templates/*.md` to your standards
+4. Use as your project starter template
+
+## Customization Examples
+
+### Customize the /plan Command
+
+The custom `/plan` command in this template already includes automatic architecture generation:
+
+Edit `.claude/commands/plan.md` to add more customizations:
+
+```markdown
+---
+description: My custom planning workflow with architecture
 ---
 
-## How Command Registration Works
+## Outline
 
-### The Registration File
+1. Run setup script...
+2. Generate research, data-model, contracts...
+3. Update agent context...
+4. **Generate architecture documentation** ← Already added!
+5. Add your own custom steps...
+```
 
-Commands are defined in `.claude/settings.local.json`:
+**Current customization**: `/plan` automatically generates `architecture.md` with diagrams, while `/speckit.plan` does not.
+
+You can add more customizations like:
+- Additional validation steps
+- Custom artifact generation
+- Team-specific documentation
+- etc.
+
+### Add New Custom Command
+
+1. Create `.claude/commands/mycommand.md`
+2. Add to `.claude/settings.local.json`:
 
 ```json
 {
   "customInstructions": [
     {
-      "name": "/speckit.plan",
-      "path": ".claude/commands/plan.md"
+      "name": "/mycommand",
+      "path": ".claude/commands/mycommand.md"
     }
   ]
 }
 ```
 
-### Execution Flow
+3. Restart Cursor
 
-When you type `/speckit.plan Use React and Express`:
+### Customize Templates
 
-1. **Cursor reads** `.claude/settings.local.json`
-2. **Finds** the command name `/speckit.plan`
-3. **Loads** the instruction file `.claude/commands/plan.md`
-4. **Injects** the markdown content as AI instructions
-5. **Replaces** `$ARGUMENTS` with `Use React and Express`
-6. **Executes** the AI with these specialized instructions
+Edit files in `.specify/templates/`:
+- `spec-template.md` - Feature specification structure
+- `plan-template.md` - Implementation plan format
+- `tasks-template.md` - Task breakdown format
 
-### Command Structure
-
-Each command file (`.claude/commands/*.md`) contains:
-
-```markdown
----
-description: Brief description of what the command does
----
-
-User input:
-
-$ARGUMENTS
-
-[Step-by-step instructions for the AI...]
-```
-
-The AI follows these instructions exactly, running bash scripts, reading templates, and generating artifacts.
-
----
-
-## Available Commands
-
-| Command | Purpose | When to Use |
-|---------|---------|-------------|
-| `/speckit.specify` | Create initial feature specification | Start of new feature |
-| `/speckit.clarify` | Ask clarifying questions about the spec | After `/specify`, before `/plan` |
-| `/speckit.plan` | Generate implementation plan & architecture | After spec is clear |
-| `/speckit.architecture` | Generate architecture diagrams | Part of `/plan` workflow |
-| `/speckit.tasks` | Break plan into actionable tasks | After `/plan` completes |
-| `/speckit.analyze` | Analyze existing code/specs | Any time you need analysis |
-| `/speckit.implement` | Execute the task breakdown | After `/tasks` completes |
-| `/speckit.constitution` | Review/update project constitution | Set project guidelines |
-
----
+Your custom `/plan` command will use these templates.
 
 ## Typical Workflow
 
-### Phase 1: Specification (Discovery)
-
+### Phase 1: Specification
 ```bash
-# 1. Create initial spec from natural language
-/speckit.specify Create a real-time chat application with rooms, user presence, and message history
+/specify Create a real-time chat app with rooms and presence
+# or
+/speckit.specify Create a real-time chat app...
 
-# 2. Clarify ambiguities
-/speckit.clarify
-# AI will ask targeted questions about unclear areas
-# Answer them in the chat, AI updates spec.md
+/clarify
+# AI asks targeted questions
 
-# Verify: Check .specify/specs/###-feature-name/spec.md
+# Review: .specify/specs/###-feature-name/spec.md
 ```
 
-**Artifacts Created:**
-- `.specify/specs/###-feature-name/spec.md` (feature specification)
-- Git branch: `###-feature-name`
-
----
-
-### Phase 2: Planning (Design)
-
+### Phase 2: Planning
 ```bash
-# 3. Generate implementation plan
-/speckit.plan We'll use Socket.io for WebSockets, React frontend, Node.js/Express backend, Redis for pub/sub, PostgreSQL for persistence
+/plan Use Node.js, Socket.IO, React, PostgreSQL
+# Custom workflow - automatically includes architecture generation
+# Generates:
+# - plan.md
+# - data-model.md
+# - research.md
+# - contracts/
+# - quickstart.md
+# - architecture.md (with Mermaid diagrams) ← Automatic!
 
-# AI will:
-# - Read the spec
-# - Research tech stack
-# - Generate data models
-# - Create API contracts
-# - Design architecture
-# - Create quickstart scenarios
+# OR use global command (no architecture):
+/speckit.plan Use Node.js...
+# Then manually run:
+# /architecture
+# (if you want architecture diagrams)
 ```
 
-**Artifacts Created:**
-- `plan.md` - Implementation strategy
-- `research.md` - Technical decisions
-- `data-model.md` - Entities and relationships
-- `contracts/` - API specifications
-- `quickstart.md` - Test scenarios
-- `architecture.md` - System diagrams
-
----
-
-### Phase 3: Task Breakdown
-
+### Phase 3: Tasks & Implementation
 ```bash
-# 4. Generate actionable tasks
-/speckit.tasks
+/tasks
+# Generates tasks.md
 
-# AI will:
-# - Parse the plan
-# - Break into phases (Setup, Tests, Core, Integration, Polish)
-# - Identify dependencies
-# - Mark parallel tasks with [P]
+/implement
+# Executes implementation
 ```
 
-**Artifacts Created:**
-- `tasks.md` - Ordered, dependency-aware task list
+## Design Philosophy
 
----
+### Spec-Kit's Approach
 
-### Phase 4: Implementation
+Spec-kit uses **global commands** to ensure:
+- Consistency across projects
+- No per-project configuration needed
+- Multi-agent support (Claude, Copilot, etc.)
+- Centralized updates
 
-```bash
-# 5. Execute implementation
-/speckit.implement
+### This Template's Approach
 
-# AI will:
-# - Read tasks.md
-# - Execute tasks in dependency order
-# - Run tests as specified
-# - Handle errors and validate
+Add **local shortcuts** to enable:
+- Team-specific workflows
+- Company coding standards
+- Custom validation steps
+- Additional artifact generation
+- Workflow automation
+
+**Key principle**: Customize via addition, not replacement. Global commands remain available.
+
+## File Structure
+
 ```
-
-**Result:**
-- Working implementation following the plan
-
----
-
-## Command Details
-
-### `/speckit.specify [feature description]`
-
-**Purpose:** Initialize a new feature specification from natural language.
-
-**Usage:**
-```bash
-/speckit.specify Build a user profile editor with avatar upload, bio, and social links
+your-project/
+├── .claude/
+│   ├── settings.local.json      # Command registrations
+│   ├── README.md                # This guidance
+│   └── commands/
+│       ├── speckit.*.md        # Global defaults (from init)
+│       └── *.md                # Custom shortcuts
+├── .specify/
+│   ├── memory/
+│   │   └── constitution.md
+│   ├── scripts/
+│   │   ├── bash/...
+│   │   └── powershell/...
+│   ├── specs/
+│   │   └── ###-feature-name/
+│   │       ├── spec.md
+│   │       ├── plan.md
+│   │       ├── architecture.md
+│   │       └── ...
+│   └── templates/
+│       ├── spec-template.md
+│       ├── plan-template.md
+│       └── ...
+└── [your project files]
 ```
-
-**What it does:**
-1. Runs `.specify/scripts/bash/create-new-feature.sh` to create branch and directory
-2. Loads `.specify/templates/spec-template.md`
-3. Writes `spec.md` with structured requirements
-4. Reports branch name and next steps
-
-**Next Step:** `/speckit.clarify`
-
----
-
-### `/speckit.clarify`
-
-**Purpose:** Identify and resolve ambiguities in the specification.
-
-**Usage:**
-```bash
-/speckit.clarify
-```
-
-**What it does:**
-1. Analyzes current spec for ambiguities
-2. Asks up to 5 targeted clarification questions
-3. Records answers in `spec.md` under `## Clarifications`
-4. Can be run multiple times
-
-**Best Practice:** Always run before `/plan` to reduce rework.
-
-**Next Step:** `/speckit.plan`
-
----
-
-### `/speckit.plan [technical details]`
-
-**Purpose:** Generate comprehensive implementation plan with architecture.
-
-**Usage:**
-```bash
-/speckit.plan Use Python 3.11 with FastAPI, PostgreSQL database, Docker for deployment
-```
-
-**What it does:**
-1. Checks for clarifications (warns if missing)
-2. Reads constitution for guidelines
-3. Researches tech stack and generates `research.md`
-4. Creates data model in `data-model.md`
-5. Defines API contracts in `contracts/`
-6. Generates test scenarios in `quickstart.md`
-7. Creates architecture diagrams in `architecture.md`
-8. Validates against constitution
-
-**Constitutional Check:** Ensures simplicity, prevents over-engineering.
-
-**Next Step:** `/speckit.tasks`
-
----
-
-### `/speckit.architecture`
-
-**Purpose:** Generate or update architecture diagrams (usually called by `/plan`).
-
-**Usage:**
-```bash
-/speckit.architecture
-```
-
-**What it does:**
-1. Reads spec, data-model, research, plan, quickstart
-2. Generates Mermaid diagrams:
-   - System Context
-   - Component Architecture
-   - Data Model (ERD + state machines)
-   - Key Flows (3-5 sequence diagrams)
-   - Deployment Architecture
-   - Technology Stack
-3. Writes `architecture.md`
-
----
-
-### `/speckit.tasks`
-
-**Purpose:** Break implementation plan into ordered, actionable tasks.
-
-**Usage:**
-```bash
-/speckit.tasks
-```
-
-**What it does:**
-1. Loads plan, data-model, contracts, research, quickstart
-2. Generates task breakdown with:
-   - **Setup tasks** - Project init, dependencies
-   - **Test tasks [P]** - One per contract/scenario
-   - **Core tasks** - One per entity/endpoint
-   - **Integration tasks** - Connections, middleware
-   - **Polish tasks [P]** - Unit tests, docs
-3. Orders by dependencies
-4. Marks parallel-safe tasks with `[P]`
-
-**Task Ordering Rules:**
-- Same file = sequential
-- Different files = can be parallel `[P]`
-- Tests before implementation (TDD)
-
-**Next Step:** `/speckit.implement`
-
----
-
-### `/speckit.implement`
-
-**Purpose:** Execute the implementation by running all tasks in order.
-
-**Usage:**
-```bash
-/speckit.implement
-```
-
-**What it does:**
-1. Validates prerequisites (constitution, spec, plan, tasks)
-2. Loads all design artifacts
-3. Parses task breakdown from `tasks.md`
-4. Executes phase-by-phase:
-   - Setup → Tests → Core → Integration → Polish
-5. Respects dependencies and parallel markers
-6. Validates at checkpoints
-
-**Execution Rules:**
-- Sequential tasks run in order
-- Parallel tasks `[P]` can run together
-- Files affecting same location run sequentially
-- TDD: Tests before implementation
-
-**Note:** This runs actual CLI commands (npm, dotnet, etc.) - ensure tools are installed.
-
----
-
-### `/speckit.analyze [target]`
-
-**Purpose:** Analyze existing code, specs, or design artifacts.
-
-**Usage:**
-```bash
-/speckit.analyze contracts/api-spec.json
-/speckit.analyze src/services/
-```
-
-**What it does:**
-- Performs semantic analysis
-- Identifies issues or improvements
-- Suggests optimizations
-- Validates against best practices
-
----
-
-### `/speckit.constitution`
-
-**Purpose:** Review or update the project constitution.
-
-**Usage:**
-```bash
-/speckit.constitution
-```
-
-**What it does:**
-- Reads `.specify/memory/constitution.md`
-- Helps establish project guidelines
-- Defines simplicity principles
-- Sets coding standards
-
-**Constitution Purpose:** The constitution prevents over-engineering by establishing project-wide principles that all phases must follow.
-
----
-
-## Permissions Model
-
-Commands can execute bash scripts and fetch web resources. Permissions are defined in `.claude/settings.local.json`:
-
-```json
-"permissions": {
-  "allow": [
-    "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
-    "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
-    "Bash(.specify/scripts/bash/setup-plan.sh:*)",
-    "WebFetch(domain:github.com)",
-    "WebFetch(domain:pkg.go.dev)"
-  ],
-  "deny": [],
-  "ask": []
-}
-```
-
-### Permission Types
-
-- **`Bash(path:*)`** - Allow specific bash script with any arguments
-- **`WebFetch(domain:example.com)`** - Allow fetching from specific domain
-- **`deny`** - Explicitly block actions
-- **`ask`** - Prompt user for approval each time
-
-### Security Design
-
-✅ **Whitelist approach** - Only explicitly allowed scripts can run
-✅ **Path restrictions** - Scripts must be in `.specify/scripts/bash/`
-✅ **Domain restrictions** - Web fetches limited to trusted domains
-❌ **No arbitrary commands** - Cannot run random bash commands
-
----
-
-## How This Aligns with Spec-Kit
-
-### Official Spec-Kit Repository
-
-This implementation follows the [official spec-kit design](https://github.com/github/spec-kit) created by GitHub.
-
-### Alignment Points
-
-| Aspect | Official Spec-Kit | This Implementation |
-|--------|-------------------|---------------------|
-| **Command Namespace** | `/speckit.*` | `/speckit.*` ✅ |
-| **Workflow Phases** | Specify → Clarify → Plan → Tasks → Implement | Same ✅ |
-| **Directory Structure** | `.specify/` for specs, templates, scripts | Same ✅ |
-| **Constitution** | `.specify/memory/constitution.md` | Same ✅ |
-| **Templates** | `.specify/templates/*.md` | Same ✅ |
-| **Scripts** | Bash scripts for state management | Same ✅ |
-| **Artifacts** | Markdown specs in `.specify/specs/` | Same ✅ |
-| **Agent Support** | Multi-agent (Claude, Copilot, etc.) | Claude-specific, extensible ✅ |
-
-### Key Differences
-
-1. **Agent Configuration:**
-   - Official: Uses various agent-specific files (`.github/copilot-instructions.md`, `CLAUDE.md`, etc.)
-   - This: Uses `.claude/settings.local.json` for Cursor/Claude
-
-2. **Command Registration:**
-   - Official: May use IDE-level or extension-level registration
-   - This: Explicit JSON configuration in workspace
-
-3. **Customization:**
-   - Official: General-purpose templates
-   - This: Can be customized per-project while maintaining compatibility
-
-### Why This Design?
-
-Spec-kit uses **Spec-Driven Development (SDD)**, which is:
-
-> A systematic approach where you write specifications first, clarify ambiguities, generate detailed plans, and then implement - all guided by AI agents.
-
-**Benefits:**
-- ✅ Reduces rework by clarifying requirements early
-- ✅ Maintains consistent architecture across features
-- ✅ Constitutional principles prevent over-engineering
-- ✅ Systematic task breakdown ensures nothing is missed
-- ✅ AI-guided but human-controlled workflow
-
-### Spec-Kit Philosophy
-
-From the [spec-kit documentation](https://github.com/github/spec-kit):
-
-1. **Specification First** - Write before coding
-2. **Clarification Required** - Resolve ambiguities early
-3. **Constitutional Constraints** - Simplicity over complexity
-4. **Test-Driven** - Tests before implementation
-5. **Incremental Delivery** - User story by user story
-
-This implementation preserves these principles while adapting to Cursor's custom instruction system.
-
----
-
-## Extending Commands
-
-### Adding a New Command
-
-1. **Create command file:**
-```bash
-touch .claude/commands/mycommand.md
-```
-
-2. **Write command instructions:**
-```markdown
----
-description: What my command does
----
-
-User input:
-
-$ARGUMENTS
-
-1. Do this first
-2. Then do this
-3. Finally do this
-```
-
-3. **Register in settings:**
-```json
-{
-  "name": "/speckit.mycommand",
-  "path": ".claude/commands/mycommand.md"
-}
-```
-
-4. **Add permissions if needed:**
-```json
-"Bash(.specify/scripts/bash/my-script.sh:*)"
-```
-
-5. **Reload Cursor** to activate
-
-### Modifying Existing Commands
-
-Commands are just markdown files. Edit `.claude/commands/*.md` to change behavior:
-
-```bash
-# Edit a command
-code .claude/commands/plan.md
-
-# Changes take effect on next execution
-# (may need to reload Cursor)
-```
-
-### Creating New Templates
-
-Templates guide document generation:
-
-```bash
-# Add new template
-code .specify/templates/my-template.md
-
-# Reference in commands
-# Load `.specify/templates/my-template.md`
-```
-
-### Adding Helper Scripts
-
-Scripts manage state and file operations:
-
-```bash
-# Create script
-code .specify/scripts/bash/my-helper.sh
-chmod +x .specify/scripts/bash/my-helper.sh
-
-# Add permission
-# "Bash(.specify/scripts/bash/my-helper.sh:*)"
-
-# Call from command
-# Run `.specify/scripts/bash/my-helper.sh --json`
-```
-
----
 
 ## Troubleshooting
 
 ### Commands Not Appearing
 
-- Ensure `.claude/settings.local.json` is valid JSON
-- Check that paths in `customInstructions` are correct
-- Reload Cursor workspace or restart Cursor
+1. **Check file exists**: `.claude/settings.local.json`
+2. **Verify JSON syntax**: Use a validator
+3. **Restart Cursor**: Completely quit and reopen
+4. **Check paths**: Command paths in settings must match actual files
 
-### Permission Errors
+### Both Global and Local Commands Visible
 
-- Add required permissions to `allow` array
-- Use exact script paths, no wildcards in directory names
-- Use `domain:` prefix for web fetches
+**This is correct!** You should see:
+- ✅ `/specify` AND `/speckit.specify`
+- ✅ `/plan` AND `/speckit.plan`
+- etc.
 
-### Commands Not Working as Expected
+Use whichever you prefer. They serve different purposes.
 
-- Check command markdown files for syntax errors
-- Verify bash scripts have execute permissions
-- Ensure prerequisites are met (run `/speckit.clarify` before `/speckit.plan`)
+### Want Only Local Commands
 
-### Arguments Not Passing Through
+You can't hide global commands, but you can:
+- Consistently use local shortcuts (`/plan` not `/speckit.plan`)
+- Document your team's convention
+- Train team to use shortcuts
 
-- Use `$ARGUMENTS` placeholder in command markdown
-- Ensure no typos in placeholder name
-- Arguments are everything after the command name
+### Commands Execute Wrong Behavior
 
----
+Check which command you're using:
+- `/plan` → Uses `.claude/commands/plan.md` (your custom)
+- `/speckit.plan` → Uses `.claude/commands/speckit.plan.md` (default)
 
 ## Additional Resources
 
-- **Official Spec-Kit:** https://github.com/github/spec-kit
-- **Spec-Kit Quick Start:** https://github.github.com/spec-kit/quickstart.html
-- **Spec-Driven Development Guide:** Check the spec-kit AGENTS.md
-
----
+- **Official Spec-Kit**: https://github.com/github/spec-kit
+- **Spec-Kit Documentation**: Check AGENTS.md in spec-kit repo
+- **This Template**: See `.claude/README.md` for more details
 
 ## Contributing
 
-To improve these commands:
+To improve this template:
 
-1. Edit command files in `.claude/commands/`
-2. Test thoroughly with various inputs
-3. Update this HOWTO if adding new commands
-4. Consider contributing improvements back to [spec-kit](https://github.com/github/spec-kit)
+1. Customize `.claude/commands/*.md` files
+2. Update `.specify/templates/*.md` as needed
+3. Test with actual projects
+4. Document changes in this file
+5. Share improvements!
 
 ---
 
-**Last Updated:** 2025-11-04
-**Spec-Kit Version:** Compatible with spec-kit 0.0.79+
-
+**Last Updated:** 2025-11-04  
+**Spec-Kit Compatibility:** 0.0.79+  
+**Approach:** Additive customization (extends, not replaces)

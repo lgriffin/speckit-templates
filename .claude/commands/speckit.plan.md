@@ -25,7 +25,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Phase 1: Update agent context by running the agent script
    - Re-evaluate Constitution Check post-design
 
-4. **Stop and report**: Command ends after Phase 1 and architecture generation. Report branch, IMPL_PLAN path, and generated artifacts (including architecture.md).
+4. **Stop and report**: Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generated artifacts.
 
 ## Phases
 
@@ -73,22 +73,9 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Add only new technology from current plan
    - Preserve manual additions between markers
 
-4. **Generate architecture documentation**:
-   - After completing data-model.md, contracts/, and quickstart.md
-   - Execute the `/architecture` command to generate architecture.md with diagrams
-   - This provides visual documentation of the system design including:
-     * System context diagram
-     * Component architecture
-     * Data model (ERD + state machines)
-     * Key user flows (sequence diagrams)
-     * Deployment architecture
-     * Technology stack visualization
-   - Architecture diagrams help validate the design and communicate it to stakeholders
-
-**Output**: data-model.md, /contracts/*, quickstart.md, architecture.md, agent-specific file
+**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific file
 
 ## Key rules
 
 - Use absolute paths
 - ERROR on gate failures or unresolved clarifications
-- Architecture generation is part of the custom `/plan` workflow (not in `/speckit.plan`)
